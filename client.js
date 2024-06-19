@@ -62,8 +62,8 @@ const senderEmail = `hoanghuudon02hp@gmail.com`;
 const dataMessage = "This is a test email.";
 const messages = [
     `AUTH LOGIN\r\n`,
-    `${process.env.GG_USERNAME}\r\n`,
-    `${process.env.GG_PASSWORD}\r\n`,
+    `${Buffer.from(process.env.GG_USERNAME).toString('base64')}\r\n`,
+    `${Buffer.from(process.env.GG_PASSWORD).toString('base64')}\r\n`,
     `MAIL FROM:<${senderEmail}>\r\n`,
     `RCPT TO:<${receiverEmail}>\r\n`,
     `DATA\r\n`,
