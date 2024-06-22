@@ -1,44 +1,63 @@
 const net = require('net');
 const fs = require('fs');
 const tls = require('tls');
-
+const Logger = require('./Logger');
 const remoteAddress = process.argv[2];
 const senderEmail = process.argv[3];
 const receiverEmail = process.argv[4];
 const subject = "Test Email";
-const port = process.env.PORT_MAILHOG;
+const port = process.env.PORT_GG;
+let hasTLS = false;
+let mime = {
+    html: 'text/html',
+    txt: 'text/plain',
+    css: 'text/css',
+    gif: 'image/gif',
+    jpg: 'image/jpeg',
+    png: 'image/png',
+    svg: 'image/svg+xml',
+    js: 'application/javascript'
+};
 
-if (remoteAddress === null || receiverEmail === null || senderEmail === null) {
-    console.log("You need to pass remote Address, sender Email and receiver" +
-        " Email");
+if (!remoteAddress || !receiverEmail || !senderEmail) {
+    console.log("You need to pass " +
+        "remote Address, " +
+        "sender Email and " +
+        "receiver Email");
     process.exit(1);
 }
 
 let dataMessage;
 let messages;
 const client = new net.Socket();
-
+const image = fs.readFileSync('cat.jpeg').toString('base64');
+console.log(`size of image: ${image.length}`);
 fs.readFile('./message', (err, data) => {
+    if(err) {
+        console.error(err);
+        return;
+    }
     dataMessage = data.toString('utf-8');
     messages = [
         `EHLO localhost\r\n`,
-        `MAIL FROM:<${senderEmail}>\r\n`,
+        `MAIL FROM:<${senderEmail}> BODY=8BITMIME\r\n`,
         `RCPT TO:<${receiverEmail}>\r\n`,
         `DATA\r\n`,
         `Subject: ${subject}
     \r\nFrom: ${senderEmail}
     \r\nTo: ${receiverEmail}
-    \r\n\r\n${dataMessage}
+    \r\n${data}
+    \r${image}
+    \r\n--boundary_9876--
     \r\n.\r\n`,
         `QUIT\r\n`
     ];
 
     client.connect(port, remoteAddress, () => {
-        console.log(`Connected to ${remoteAddress}:${port}`);
-        //client.write('EHLO localhost\r\n');
+        Logger.info(`Connected to ${remoteAddress}:${port}`);
     });
-})
-let hasTLS = false;
+});
+
 client.on('data', (data) => {
     console.log(`Received:\n${data.toString()}`);
 
@@ -61,8 +80,7 @@ client.on('error', (err) => {
 });
 
 function handleServerResponse(socket, response) {
-    if (messages.length > 0) { // Check for completion of EHLO response
-        // Now proceed to authenticate or send MAIL FROM, etc.
+    if (messages.length > 0) {
         const message = messages.shift();
         console.log(`Sending: ${message}`);
         socket.write(message);

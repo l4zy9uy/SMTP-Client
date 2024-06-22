@@ -1,2 +1,12 @@
-Hello
-This is a message from a file.
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=boundary_9876
+
+--boundary_9876
+Content-Type: text/plain
+
+This is the email message body.
+
+--boundary_9876
+Content-Type: image/jpeg
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="cat.jpeg"
